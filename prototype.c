@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 typedef enum {
 	EMPTY = 0,
@@ -14,7 +15,7 @@ typedef struct s_tile {
 	int x;
 	int y;
 	tile_type type;
-	// ptr to max 4 neighbours
+	// ptr to max 4 neighbours (up right down left)
 } map_tile;
 
 char	ft_tile_type_to_char(tile_type type) {
@@ -86,12 +87,19 @@ void	ft_draw_rect(p_map_tile** map, int start_x, int start_y, int width, int hei
 
 map_tile	*ft_create_tile(int x, int y)
 {
-	map_tile* cur_tile; // = { x, y, empty };
-	cur_tile = malloc(sizeof(map_tile));
+	map_tile* cur_tile; // create new map_tile pointer
+	cur_tile = malloc(sizeof(map_tile)); // malloc map_tile
 
-	cur_tile->x = x;
+	cur_tile->x = x; // save x and y, might be usefull
 	cur_tile->y = y;
-	cur_tile->type = EMPTY;
+
+	// temp density -> move this logic to elsewhere
+	int density = 1;
+
+	if ((rand() % 30) < density) // 1 in 30 (3.3%)
+		cur_tile->type = OBSTACLE;
+	else
+		cur_tile->type = EMPTY;
 
 	return cur_tile;
 }
@@ -100,21 +108,27 @@ int	main(void)
 {
 	int x = 0;
 	int y = 0;
-	int	size = 16; // 0 - 15 * 0 - 15
+	int	size = 16; // 0 - 15 * 0 - 15, maybe add function to use 1-16 (size - 1)
 	p_map_tile** map;
 
-	map = (p_map_tile**)malloc(sizeof(map_tile) * size * size);
+	// initialize randomness
+	time_t t;
+	srand((unsigned)time(&t));
+
+	map = (p_map_tile**)malloc(sizeof(map_tile) * size * size); // not sure if pointer is the correct type
 
 	while (x < size)
 	{
 
-		map[x] = (p_map_tile*)malloc(sizeof(map_tile) * size);
+		map[x] = (p_map_tile*)malloc(sizeof(map_tile) * size); // allocate row
 
 		y = 0;
 		while (y < size)
 		{
 
+			// choose type and pass type to create_tile
 			map[x][y] = ft_create_tile(x, y);
+
 			y++;
 
 		}
@@ -122,21 +136,23 @@ int	main(void)
 		x++;
 	}
 
-	// random obstacles
-
-	map[1][1]->type = OBSTACLE;
-	map[14][14]->type = OBSTACLE;
-	map[1][14]->type = OBSTACLE;
-	map[14][1]->type = OBSTACLE;
+	// manual obstacles
+	//map[1][1]->type = OBSTACLE;
+	//map[14][14]->type = OBSTACLE;
+	//map[1][14]->type = OBSTACLE;
+	//map[14][1]->type = OBSTACLE;
 	//map[2][3]->type = OBSTACLE;
 
-	ft_draw_rect(map, 4, 4, 8, 6);
+
+	// manual rect drawing
+	//ft_draw_rect(map, 4, 4, 8, 6);
 
 
+	// print entire map
 	ft_print_map(map, size);
 
-	// Free memory
 
+	// free memory
 	x = 0;
 	while (x < size)
 	{
@@ -144,7 +160,7 @@ int	main(void)
 		y = 0;
 		while (y < size)
 		{
-			//free(map[x][y]);
+			//free(map[x][y]); not required?
 			y++;
 		}
 		x++;
