@@ -207,9 +207,13 @@ rect* ft_brute_solve(p_map_tile** map, int size, int start_x, int start_y)
 	int max_x = size - x;
 	int max_y = size - y;
 
-	// Loop A : Scan Horizontal
+	// Outcome A : 
+	// Keep going right until obstacle is met
+	// Save current square at previous max_x and continue with new max_x
+	// This creates branches and we should choose the one with the largest size in this position
+	// Recursion?
 	y = start_y;
-	while (y < max_y)
+	while (y < max_y && y < size)
 	{
 		x = start_x;
 		while (x < max_x)
@@ -218,7 +222,7 @@ rect* ft_brute_solve(p_map_tile** map, int size, int start_x, int start_y)
 			{
 				max_x = x;
 				max_y = y;
-				goto end; // quit this rect here
+				goto end; // Exit loop
 			}
 			x++;
 		}
@@ -251,7 +255,10 @@ int	main(void)
 		rect = ft_brute_solve(map, size, x, y);
 
 		if (big->size < rect->size)
+		{
+			free(big);
 			big = rect;
+		}
 
 		ft_print_map(map, size);
 		//Sleep(500);
