@@ -17,7 +17,6 @@ typedef struct s_tile {
 	int x;
 	int y;
 	tile_type type;
-	// ptr to max 4 neighbours (up right down left)
 } map_tile;
 
 typedef struct s_rect* p_rect;
@@ -81,7 +80,7 @@ void	ft_draw_rect(p_map_tile** map, int start_x, int start_y, int width, int hei
 
 	// safety if width/height is > size ?
 
-	while (y < height)
+	while (y < height) // replace 16 with size
 	{
 		x = start_x;
 		while (x < width)
@@ -117,9 +116,9 @@ map_tile	*ft_create_tile(int x, int y)
 	cur_tile->y = y;
 
 	// temp density : can move this logic to elsewhere
-	int density = 1;
+	int density = 2;
 
-	if ((rand() % 50) < density) // 1 in 30 (3.3%)
+	if ((rand() % 30) < density) // 1 in 30 (3.3%)
 		cur_tile->type = OBSTACLE;
 	else
 		cur_tile->type = EMPTY;
@@ -177,7 +176,7 @@ void	ft_reset_map(p_map_tile **map, int size)
 		y++;
 	}
 
-	printf("Removed %d full\n", removed);
+	//printf("Removed %d full\n", removed);
 
 }
 
@@ -204,35 +203,40 @@ rect* ft_brute_solve(p_map_tile** map, int size, int start_x, int start_y)
 {
 	int x = start_x;
 	int y = start_y;
-	int max_x = size - x;
-	int max_y = size - y;
+	int max_size = 0;
+	int flag = 0;
 
-	// Outcome A : 
-	// Keep going right until obstacle is met
-	// Save current square at previous max_x and continue with new max_x
-	// This creates branches and we should choose the one with the largest size in this position
-	// Recursion?
-	y = start_y;
-	while (y < max_y && y < size)
-	{
-		x = start_x;
-		while (x < max_x)
+	while (flag == 0) {
+
+		if (start_y + max_size + 1 < size && start_x + max_size + 1 < size)
+			max_size++;
+		else
+			break;
+
+		y = start_y;
+		while (y < (start_y + max_size) && flag == 0)
 		{
-			if (map[y][x]->type == OBSTACLE)
+			x = start_x;
+			while (x < (start_x + max_size))
 			{
-				max_x = x;
-				max_y = y;
-				goto end; // Exit loop
+				if (map[y][x]->type == OBSTACLE)
+				{
+					max_size--;
+					flag++;
+					break;
+				}
+				x++;
 			}
-			x++;
+			y++;
 		}
-		y++;
+
 	}
 
-end:
+	if (max_size == 0)
+		max_size = 1;
 
-	ft_draw_rect(map, start_x, start_y, max_x, max_y);
-	return ft_create_rect(start_x, start_y, max_x, max_y);  // width and height are not correct
+	ft_draw_rect(map, start_x, start_y, max_size, max_size);
+	return ft_create_rect(start_x, start_y, max_size, max_size);
 
 }
 
@@ -251,8 +255,11 @@ int	main(void)
 	input = 0;
 	while (y < size)
 	{
+		printf("x %d, y %d\n", x, y);
+
 		ft_reset_map(map, size);
 		rect = ft_brute_solve(map, size, x, y);
+		ft_print_map(map, size);
 
 		if (big->size < rect->size)
 		{
@@ -260,8 +267,7 @@ int	main(void)
 			big = rect;
 		}
 
-		ft_print_map(map, size);
-		//Sleep(500);
+		//Sleep(400);
 
 		x++;
 		if (x == size) {
