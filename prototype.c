@@ -206,6 +206,8 @@ rect* ft_brute_solve(p_map_tile** map, int size, int start_x, int start_y)
 	int max_size = 0;
 	int flag = 0;
 
+	// x 15 and y 15 has issues
+
 	while (flag == 0) {
 
 		if (start_y + max_size + 1 < size && start_x + max_size + 1 < size)
@@ -214,14 +216,14 @@ rect* ft_brute_solve(p_map_tile** map, int size, int start_x, int start_y)
 			break;
 
 		y = start_y;
-		while (y < (start_y + max_size) && flag == 0)
+		while (y <= (start_y + max_size) && flag == 0)
 		{
 			x = start_x;
-			while (x < (start_x + max_size))
+			while (x <= (start_x + max_size))
 			{
 				if (map[y][x]->type == OBSTACLE)
 				{
-					max_size--;
+					//max_size--;
 					flag++;
 					break;
 				}
@@ -232,10 +234,7 @@ rect* ft_brute_solve(p_map_tile** map, int size, int start_x, int start_y)
 
 	}
 
-	if (max_size == 0)
-		max_size = 1;
-
-	ft_draw_rect(map, start_x, start_y, max_size, max_size);
+	//ft_draw_rect(map, start_x, start_y, max_size, max_size);
 	return ft_create_rect(start_x, start_y, max_size, max_size);
 
 }
@@ -255,11 +254,10 @@ int	main(void)
 	input = 0;
 	while (y < size)
 	{
-		printf("x %d, y %d\n", x, y);
-
-		ft_reset_map(map, size);
+		//printf("x %d, y %d\n", x, y);
+		//ft_reset_map(map, size);
 		rect = ft_brute_solve(map, size, x, y);
-		ft_print_map(map, size);
+		//ft_print_map(map, size);
 
 		if (big->size < rect->size)
 		{
