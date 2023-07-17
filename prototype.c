@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <windows.h>
 
 typedef enum {
 	EMPTY = 0,
@@ -66,8 +67,8 @@ void	ft_print_map(p_map_tile** map, int size)
 	}
 
 	printf("\n");
-	printf("Total of %d obstacles\n", obstacles);
-	printf("Total of %d filled\n", filled);
+	//printf("Total of %d obstacles\n", obstacles);
+	//printf("Total of %d filled\n", filled);
 
 }
 
@@ -75,13 +76,15 @@ void	ft_draw_rect(p_map_tile** map, int start_x, int start_y, int width, int hei
 {
 	int x = start_x;
 	int y = start_y;
-	width += start_x;
-	height += start_y;
+	width += x;
+	height += y;
 
-	while (y < height && y < 16)
+	// safety if width/height is > size ?
+
+	while (y < height)
 	{
 		x = start_x;
-		while (x < width && x < 16)
+		while (x < width)
 		{
 			if (map[y][x]->type != OBSTACLE)
 				map[y][x]->type = FULL;
@@ -89,7 +92,6 @@ void	ft_draw_rect(p_map_tile** map, int start_x, int start_y, int width, int hei
 		}
 		y++;
 	}
-
 }
 
 rect* ft_create_rect(int x, int y, int width, int height)
@@ -101,48 +103,9 @@ rect* ft_create_rect(int x, int y, int width, int height)
 	rectangle->y = y;
 	rectangle->w = width;
 	rectangle->h = height;
-	rectangle->size = width * height;
-
-	printf("New rect, size: %d\n", rectangle->size);
+	rectangle->size = width * height; // not correct, check width and height
 
 	return rectangle;
-}
-
-void	ft_brute_solve(p_map_tile** map, int size, int start_x, int start_y)
-{
-	int x = start_x;
-	int y = start_y;
-	int max_x = size;
-	int max_y = size;
-
-	// Loop A : Scan Horizontal
-	y = start_y;
-	while (y < max_y)
-	{
-		x = start_x;
-		while (x < max_x)
-		{
-			if (map[y][x]->type == OBSTACLE)
-			{
-				max_x = x;
-				goto end;
-			}
-
-			x++;
-		}
-		x = start_x;
-		y++;
-	}
-
-end:
-
-	max_y = y - 1;
-
-	//p_rect *rectangle = ft_create_rect(start_x, start_y, max_x - start_x, max_y - start_y);
-	ft_draw_rect(map, start_x, start_y, max_x, max_y);
-
-	// save result as a new square
-
 }
 
 map_tile	*ft_create_tile(int x, int y)
@@ -204,7 +167,7 @@ void	ft_reset_map(p_map_tile **map, int size)
 		x = 0;
 		while (x < size)
 		{
-			if (map[y][x]->type == FULL)
+			if (map[y][x]->type == FULL || map[y][x]->type == TEMP)
 			{
 				map[y][x]->type = EMPTY;
 				removed++;
@@ -237,6 +200,38 @@ void	ft_clean(p_map_tile** map, int size)
 	free(map);
 }
 
+rect* ft_brute_solve(p_map_tile** map, int size, int start_x, int start_y)
+{
+	int x = start_x;
+	int y = start_y;
+	int max_x = size - x;
+	int max_y = size - y;
+
+	// Loop A : Scan Horizontal
+	y = start_y;
+	while (y < max_y)
+	{
+		x = start_x;
+		while (x < max_x)
+		{
+			if (map[y][x]->type == OBSTACLE)
+			{
+				max_x = x;
+				max_y = y;
+				goto end; // quit this rect here
+			}
+			x++;
+		}
+		y++;
+	}
+
+end:
+
+	ft_draw_rect(map, start_x, start_y, max_x, max_y);
+	return ft_create_rect(start_x, start_y, max_x, max_y);  // width and height are not correct
+
+}
+
 int	main(void)
 {
 	p_map_tile** map;
@@ -244,25 +239,37 @@ int	main(void)
 	char input;
 	int x = 0;
 	int y = 0;
+	struct s_rect* rect;
+	struct s_rect* big;
 	
+	big = ft_create_rect(0,0,0,0);
 	map = ft_create_map(size);
-
-label:
-
 	input = 0;
-	ft_reset_map(map, size);
-	ft_brute_solve(map, size, x, y); // change solving position
-	ft_print_map(map, size);
-
-	do
+	while (y < size)
 	{
-		scanf_s("%d", &x);
-		scanf_s("%d", &y);
-		goto label;
+		ft_reset_map(map, size);
+		rect = ft_brute_solve(map, size, x, y);
 
-	} while (x < size && y < size);
+		if (big->size < rect->size)
+			big = rect;
+
+		ft_print_map(map, size);
+		//Sleep(500);
+
+		x++;
+		if (x == size) {
+			x = 0;
+			y++;
+		}
+
+	}
+	
+	ft_reset_map(map, size);
+	ft_draw_rect(map, big->x, big->y, big->w, big->h);
+	ft_print_map(map, size);
+	printf("Largest rect: x %d, y %d - width %d, height %d\n", big->x, big->y, big->w, big->h);
 
 	ft_clean(map, size);
-
+		
 	return(0);
 }
