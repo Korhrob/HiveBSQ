@@ -6,7 +6,8 @@
 typedef enum {
 	EMPTY = 0,
 	OBSTACLE = 1,
-	FULL = 2
+	FULL = 2,
+	TEMP = 3
 } tile_type;
 
 typedef struct s_tile* p_map_tile;
@@ -18,47 +19,53 @@ typedef struct s_tile {
 	// ptr to max 4 neighbours (up right down left)
 } map_tile;
 
-char	ft_tile_type_to_char(tile_type type) {
+typedef struct s_rect* p_rect;
 
+typedef struct s_rect {
+	int x;
+	int y;
+	int w;
+	int h;
+	int size;
+} rect;
+
+char	ft_tile_type_to_char(tile_type type)
+{
 	if (type == OBSTACLE)
 		return 'o';
 	else if (type == FULL)
 		return 'x';
-
+	else if (type == TEMP)
+		return 'a';
 	return '.'; // default
 
 }
 
-void	ft_print_map(p_map_tile** map, int size) {
-
+void	ft_print_map(p_map_tile** map, int size)
+{
 	int x = 0;
 	int y = 0;
 	int obstacles = 0;
 	int filled = 0;
 
-	while (x < size)
+	while (y < size)
 	{
-
-		y = 0;
-		while (y < size)
+		x = 0;
+		while (x < size)
 		{
-
 			if (map[y][x]->type == OBSTACLE)
 				obstacles++;
 			else if (map[y][x]->type == FULL)
 				filled++;
-
 			printf("%c", ft_tile_type_to_char(map[y][x]->type));
-			y++;
+			x++;
 
 		}
-
 		printf("\n");
-		x++;
+		y++;
 	}
 
 	printf("\n");
-	printf("Printed total of %d characters\n", size * size);
 	printf("Total of %d obstacles\n", obstacles);
 	printf("Total of %d filled\n", filled);
 
@@ -71,17 +78,70 @@ void	ft_draw_rect(p_map_tile** map, int start_x, int start_y, int width, int hei
 	width += start_x;
 	height += start_y;
 
-	while (x < width)
+	while (y < height && y < 16)
 	{
-		y = start_y;
-		while (y < height)
+		x = start_x;
+		while (x < width && x < 16)
 		{
-
-			map[x][y]->type = FULL;
-			y++;
+			if (map[y][x]->type != OBSTACLE)
+				map[y][x]->type = FULL;
+			x++;
 		}
-		x++;
+		y++;
 	}
+
+}
+
+rect* ft_create_rect(int x, int y, int width, int height)
+{
+	rect* rectangle;
+	rectangle = malloc(sizeof(rect));
+
+	rectangle->x = x;
+	rectangle->y = y;
+	rectangle->w = width;
+	rectangle->h = height;
+	rectangle->size = width * height;
+
+	printf("New rect, size: %d\n", rectangle->size);
+
+	return rectangle;
+}
+
+void	ft_brute_solve(p_map_tile** map, int size, int start_x, int start_y)
+{
+	int x = start_x;
+	int y = start_y;
+	int max_x = size;
+	int max_y = size;
+
+	// Loop A : Scan Horizontal
+	y = start_y;
+	while (y < max_y)
+	{
+		x = start_x;
+		while (x < max_x)
+		{
+			if (map[y][x]->type == OBSTACLE)
+			{
+				max_x = x;
+				goto end;
+			}
+
+			x++;
+		}
+		x = start_x;
+		y++;
+	}
+
+end:
+
+	max_y = y - 1;
+
+	//p_rect *rectangle = ft_create_rect(start_x, start_y, max_x - start_x, max_y - start_y);
+	ft_draw_rect(map, start_x, start_y, max_x, max_y);
+
+	// save result as a new square
 
 }
 
@@ -93,10 +153,10 @@ map_tile	*ft_create_tile(int x, int y)
 	cur_tile->x = x; // save x and y, might be usefull
 	cur_tile->y = y;
 
-	// temp density -> move this logic to elsewhere
+	// temp density : can move this logic to elsewhere
 	int density = 1;
 
-	if ((rand() % 30) < density) // 1 in 30 (3.3%)
+	if ((rand() % 50) < density) // 1 in 30 (3.3%)
 		cur_tile->type = OBSTACLE;
 	else
 		cur_tile->type = EMPTY;
@@ -104,68 +164,105 @@ map_tile	*ft_create_tile(int x, int y)
 	return cur_tile;
 }
 
-int	main(void)
-{
+p_map_tile** ft_create_map(int size) {
+
 	int x = 0;
 	int y = 0;
-	int	size = 16; // 0 - 15 * 0 - 15, maybe add function to use 1-16 (size - 1)
 	p_map_tile** map;
 
-	// initialize randomness
 	time_t t;
 	srand((unsigned)time(&t));
 
-	map = (p_map_tile**)malloc(sizeof(map_tile) * size * size); // not sure if pointer is the correct type
+	map = (p_map_tile**)malloc(sizeof(map_tile) * size * size);
 
-	while (x < size)
+	while (y < size)
 	{
 
-		map[x] = (p_map_tile*)malloc(sizeof(map_tile) * size); // allocate row
+		map[y] = (p_map_tile*)malloc(sizeof(map_tile) * size); // allocate row
 
-		y = 0;
-		while (y < size)
+		x = 0;
+		while (x < size)
 		{
-
-			// choose type and pass type to create_tile
-			map[x][y] = ft_create_tile(x, y);
-
-			y++;
-
+			map[y][x] = ft_create_tile(x, y);
+			x++;
 		}
-
-		x++;
+		y++;
 	}
 
-	// manual obstacles
-	//map[1][1]->type = OBSTACLE;
-	//map[14][14]->type = OBSTACLE;
-	//map[1][14]->type = OBSTACLE;
-	//map[14][1]->type = OBSTACLE;
-	//map[2][3]->type = OBSTACLE;
+	return map;
 
+}
 
-	// manual rect drawing
-	//ft_draw_rect(map, 4, 4, 8, 6);
+void	ft_reset_map(p_map_tile **map, int size)
+{
+	int x = 0;
+	int y = 0;
+	int removed = 0;
 
-
-	// print entire map
-	ft_print_map(map, size);
-
-
-	// free memory
-	x = 0;
-	while (x < size)
+	while (y < size)
 	{
-		free(map[x]);
-		y = 0;
-		while (y < size)
+		x = 0;
+		while (x < size)
 		{
-			//free(map[x][y]); not required?
-			y++;
+			if (map[y][x]->type == FULL)
+			{
+				map[y][x]->type = EMPTY;
+				removed++;
+			}
+			x++;
 		}
-		x++;
+		y++;
+	}
+
+	printf("Removed %d full\n", removed);
+
+}
+
+void	ft_clean(p_map_tile** map, int size)
+{
+	int x = 0;
+	int y = 0;
+
+	x = 0;
+	while (y < size)
+	{
+		free(map[y]);
+		x = 0;
+		while (x < size)
+		{
+			x++;
+		}
+		y++;
 	}
 	free(map);
+}
+
+int	main(void)
+{
+	p_map_tile** map;
+	int	size = 16; // 0 - 15 * 0 - 15, maybe add function to use 1-16 (size - 1)
+	char input;
+	int x = 0;
+	int y = 0;
+	
+	map = ft_create_map(size);
+
+label:
+
+	input = 0;
+	ft_reset_map(map, size);
+	ft_brute_solve(map, size, x, y); // change solving position
+	ft_print_map(map, size);
+
+	do
+	{
+		scanf_s("%d", &x);
+		scanf_s("%d", &y);
+		goto label;
+
+	} while (x < size && y < size);
+
+	ft_clean(map, size);
 
 	return(0);
 }
