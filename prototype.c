@@ -80,10 +80,10 @@ void	ft_draw_rect(p_map_tile** map, int start_x, int start_y, int width, int hei
 
 	// safety if width/height is > size ?
 
-	while (y < height) // replace 16 with size
+	while (y <= height) // replace 16 with size
 	{
 		x = start_x;
-		while (x < width)
+		while (x <= width)
 		{
 			if (map[y][x]->type != OBSTACLE)
 				map[y][x]->type = FULL;
@@ -116,7 +116,7 @@ map_tile	*ft_create_tile(int x, int y)
 	cur_tile->y = y;
 
 	// temp density : can move this logic to elsewhere
-	int density = 2;
+	int density = 10;
 
 	if ((rand() % 30) < density) // 1 in 30 (3.3%)
 		cur_tile->type = OBSTACLE;
@@ -206,8 +206,6 @@ rect* ft_brute_solve(p_map_tile** map, int size, int start_x, int start_y)
 	int max_size = 0;
 	int flag = 0;
 
-	// x 15 and y 15 has issues
-
 	while (flag == 0) {
 
 		if (start_y + max_size + 1 < size && start_x + max_size + 1 < size)
@@ -223,7 +221,7 @@ rect* ft_brute_solve(p_map_tile** map, int size, int start_x, int start_y)
 			{
 				if (map[y][x]->type == OBSTACLE)
 				{
-					//max_size--;
+					max_size--;
 					flag++;
 					break;
 				}
@@ -252,6 +250,7 @@ int	main(void)
 	big = ft_create_rect(0,0,0,0);
 	map = ft_create_map(size);
 	input = 0;
+	
 	while (y < size)
 	{
 		//printf("x %d, y %d\n", x, y);
@@ -265,7 +264,7 @@ int	main(void)
 			big = rect;
 		}
 
-		//Sleep(400);
+		//Sleep(500);
 
 		x++;
 		if (x == size) {
@@ -274,6 +273,7 @@ int	main(void)
 		}
 
 	}
+	
 	
 	ft_reset_map(map, size);
 	ft_draw_rect(map, big->x, big->y, big->w, big->h);
