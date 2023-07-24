@@ -7,11 +7,10 @@
 // This was not my final solution and probably doesn't compile properly
 // The ideas and solution themselves are good, so you can reference this for the actualy solving part
 
-typedef enum {
+typedef enum { // Makes it easier to compare tile types instead of chars etc
 	EMPTY = 0,
 	OBSTACLE = 1,
 	FULL = 2,
-	TEMP = 3
 } tile_type;
 
 typedef struct s_tile* p_map_tile;
