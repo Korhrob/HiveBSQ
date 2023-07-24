@@ -24,11 +24,11 @@ typedef struct s_tile {
 typedef struct s_rect* p_rect;
 
 typedef struct s_rect { // Used to pass around a lot of arguments
-	int x;
-	int y;
-	int w;
-	int h;
-	int size;
+	int x; // x position
+	int y; // y position
+	int w; // width
+	int h; // height
+	int size; // size in tiles
 } rect;
 
 char	ft_tile_type_to_char(tile_type type, char symbols[4])
@@ -120,13 +120,19 @@ map_tile	*ft_create_tile(int x, int y)
 	return cur_tile;
 }
 
-p_map_tile** ft_create_map(int size) { // map can be rectangle, use width and height instead of size
+p_map_tile** ft_create_map(int size)
+{ 
 
+	// map can be rectangle, use width and height instead of size
+	// map should be built from a very long string ex. "o..\n...\n.o.\n" for 3x3 map
+	// I also converted the characters to enums by comparing the current map character with all the symbols
+	// then just casting the int position to enum ex. map[y][x]->type = (tile_type)i;
+	
 	int x = 0;
 	int y = 0;
 	p_map_tile** map;
 
-	// used to initialize randomizing
+	// used to initialize randomizing, you wont need this later
 	time_t t;
 	srand((unsigned)time(&t));
 
@@ -143,6 +149,7 @@ p_map_tile** ft_create_map(int size) { // map can be rectangle, use width and he
 		while (x < size)
 		{
 			map[y][x] = ft_create_tile(x, y);
+			// set the correct enum type here or inside ft_create_tile
 			x++;
 		}
 		y++;
@@ -200,12 +207,19 @@ rect* ft_brute_solve(p_map_tile** map, int size, int start_x, int start_y)
 	// for optimizing it could also take the square size as an argument
 	// and set max_rect as the cur largest square size
 	// passing arguments x, y, width, height and size through a rect(struct)
+
+	// The main idea is to go through every yx coordinate and check for obstacles
+	// while increasing the square size, then returning the square
+	// and saving it if its the largest one found so far
 	
 	int x = start_x;
 	int y = start_y;
 	int max_size = 0; // square size
-	int flag = 0;
+	int flag = 0; // 
 
+	// The loop here is pretty ugly, I used recursion in my final solution
+	// and made it look a lot cleaner
+	
 	while (flag == 0) {
 
 		if (start_y + max_size + 1 < size && start_x + max_size + 1 < size)
@@ -232,14 +246,16 @@ rect* ft_brute_solve(p_map_tile** map, int size, int start_x, int start_y)
 
 	}
 
-	//ft_draw_rect(map, start_x, start_y, max_size, max_size); was usefull for debugging
 	return ft_create_rect(start_x, start_y, max_size, max_size);
 
 }
 
 int	main(void) 
 {
-	// turn this into a function and take in arguments width, height, map (as a string) and symbols[4] (string ex. ".ox")
+	// turn this into a function and take in arguments; width, height, map (as a string) and symbols[4] (string ex. ".ox")
+	// move all solving logic outside of this function, just initialize and print output here
+	// cause I wanted to start working on the solving part as fast as possible,
+	// I made a map generator here, but in the actual assignment the map has to come from a file or standard input
 	
 	p_map_tile** map;
 	int	size = 16; // change to width & height, map can be a rectangle
@@ -249,13 +265,14 @@ int	main(void)
 	struct s_rect* big;
 	
 	big = ft_create_rect(0,0,0,0);
-	map = ft_create_map(size);
+	map = ft_create_map(size); // change to take in width, height, map(string), symbols[4](string)
 	
 	while (y < size)
 	{
 		//printf("x %d, y %d\n", x, y);
 		//ft_reset_map(map, size);
 		rect = ft_brute_solve(map, size, x, y);
+		//ft_draw_rect(map, x, y, rect->w, rect->h); was usefull for debugging
 		//ft_print_map(map, size);
 
 		if (big->size < rect->size)
@@ -281,6 +298,6 @@ int	main(void)
 	printf("Largest rect: x %d, y %d - width %d, height %d\n", big->x, big->y, big->w, big->h);
 
 	ft_clean(map, size);
-		
+
 	return(0);
 }
